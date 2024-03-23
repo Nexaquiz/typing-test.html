@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Typing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+        
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <textarea id="custom-text-input" placeholder="Paste custom text here..."></textarea>
+        <button id="start-btn" onclick="startTest()">Start Test</button>
+        <div id="test-prompt">Start the test by pasting your text and clicking 'Start Test'.</div>
+        <textarea id="test-input" placeholder="Test will begin after you click 'Start Test'..." disabled></textarea>
+        <button id="submit-btn" onclick="submitTest()" disabled>Submit Test</button>
+        <div id="results"></div>
+    </div>
+    <script>
+        let startTime, timerInterval, totalWords, wrongWords = 0;
+
+        function calculateResults(typedText, elapsedTime, totalTypedWords) {
+            let typedWords = typedText.trim().split(/\s+/);
+            let correctWords = totalTypedWords - wrongWords;
+            let accuracy = (correctWords / totalTypedWords) * 100 || 0;
+            let wpm = Math.round(totalTypedWords / (elapsedTime / 60)) || 0;
+            let keystrokes = typedText.length;
+            return { accuracy: accuracy.toFixed(2), wpm, totalTypedWords, keystrokes, wrongWords };
+        }
+
+        function displayResults() {
+            const testInput = document.getElementById("test-input").value;
+            const elapsedTime = (new Date() - startTime) / 1000 / 60; // minutes
+            const { accuracy, wpm, totalTypedWords, keystrokes, wrongWords } = calculateResults(testInput, elapsedTime, totalWords);
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = `
+                <p>Typing Speed: ${wpm} WPM</p>
+                <p>Accuracy: ${accuracy}%</p>
+                <p>Total Typed Words: ${totalTypedWords}</p>
+                <p>Total Keystrokes: ${keystrokes}</p>
+                <p>Wrong Words Typed: ${wrongWords}</p>
+            `;
+        }
+
+        function startTest() {
+            const customTextInput = document.getElementById("custom-text-input");
+            const testInput = document.getElementById("test-input");
+            const startBtn = document.getElementById("start-btn");
+            const submitBtn = document.getElementById("submit-btn");
+
+            totalWords = customTextInput.value.trim().split(/\s+/).length;
+            wrongWords = 0;
+
+            testInput.disabled = false;
+            testInput.value = '';
+            testInput.focus();
+            startTime = new Date();
+            startBtn.disabled = true;
+            submitBtn.disabled = false;
+            document.getElementById("test-prompt").textContent = customTextInput.value || "The quick brown fox jumps over the lazy dog.";
+
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(function() {
+                const elapsedTime = (new Date() - startTime) / 1000 / 60; // minutes
+                if (elapsedTime >= 10) {
+                    clearInterval(timerInterval);
+                    submitTest();
+                }
+            }, 1000);
+        }
+
+        function submitTest() {
+            clearInterval(timerInterval);
+            displayResults();
+            document.getElementById("submit-btn").disabled = true;
+            document.getElementById("test-input").disabled = true;
+        }
+
+        document.getElementById("test-input").addEventListener("input", function() {
+            const testPrompt = document.getElementById("test-prompt").textContent;
+            const testInput = document.getElementById("test-input").value;
+            const typedWords = testInput.trim().split(/\s+/);
+            const promptWords = testPrompt.trim().split(/\s+/);
+            wrongWords = 0;
+            typedWords.forEach((word, index) => {
+                if (word !== promptWords[index]) wrongWords++;
+            });
+        });
+    </script>
+</body>
+</html>
